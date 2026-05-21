@@ -36,9 +36,11 @@ class MainActivity : AppCompatActivity() {
 
         val config = VeryLivenessConfig(
             sdkKey = "veryai_sdk_EvY1fzQDal-3XLkhyegxUg6Vr03wVzmmmHLCGkp5EnM",  // staging SDK key — replace with yours
-            themeMode = "dark",
+            themeMode = "light",
             language = "en",
         )
+
+        config.showError = true
 
         VeryAILiveness.check(
             context = this,
