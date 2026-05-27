@@ -40,7 +40,15 @@ class MainActivity : AppCompatActivity() {
             language = "en",
         )
 
+        // When true, terminal errors route to an in-SDK error page with
+        // Retry / Close instead of returning straight to this callback.
         config.showError = true
+        // When true (default), the "Thanks for verifying" success page plays
+        // before returning. Set false to return the instant capture succeeds.
+        config.showSuccess = true
+        // Persist SDK logs to verysdk.log so the Appium e2e harness can adb
+        // pull them on failure (file logging is gated on debugLogging).
+        config.debugLogging = true
 
         VeryAILiveness.check(
             context = this,
