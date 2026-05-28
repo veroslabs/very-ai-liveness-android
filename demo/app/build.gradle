@@ -36,7 +36,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
 
-    implementation 'org.very:liveness:1.0.48'
+    implementation 'org.very:liveness:1.0.49'
 
     // Force CameraX 1.4.1 for 16 KB aligned native libs.
     def camerax_version = "1.4.1"
