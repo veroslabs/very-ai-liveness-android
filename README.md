@@ -15,7 +15,7 @@ app's `build.gradle`:
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.0.49'
+    implementation 'org.very:liveness:1.0.50'
 }
 ```
 
@@ -30,17 +30,17 @@ Two AARs ship at the root of every tagged release:
 
 | File | Purpose |
 |---|---|
-| `liveness-1.0.49.aar` | Main SDK — `org.very:liveness` |
-| `sdk-native-bundle-1.0.49.aar` | Optional bundled `.so` companion (see *Asset loading* below) |
+| `liveness-1.0.50.aar` | Main SDK — `org.very:liveness` |
+| `sdk-native-bundle-1.0.50.aar` | Optional bundled `.so` companion (see *Asset loading* below) |
 
 Drop them in your app's `libs/` directory and add a fileTree
 dependency:
 
 ```gradle
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['liveness-1.0.49.aar'])
+    implementation fileTree(dir: 'libs', include: ['liveness-1.0.50.aar'])
     // Optional — opt into bundled mode (see Asset loading)
-    implementation fileTree(dir: 'libs', include: ['sdk-native-bundle-1.0.49.aar'])
+    implementation fileTree(dir: 'libs', include: ['sdk-native-bundle-1.0.50.aar'])
     // VeryAILiveness depends on AndroidX + CameraX at runtime; the
     // released POM declares them, but fileTree skips POM resolution
     // so they have to be added manually:
@@ -118,8 +118,8 @@ ABI), add the companion `sdk-native-bundle` artifact alongside:
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.0.49'
-    implementation 'org.very:sdk-native-bundle:1.0.49'
+    implementation 'org.very:liveness:1.0.50'
+    implementation 'org.very:sdk-native-bundle:1.0.50'
 }
 ```
 
@@ -149,6 +149,6 @@ A runnable demo lives in `demo/` — clone this repo, open
 `demo/app/src/main/kotlin/org/very/liveness/example/MainActivity.kt`,
 plug in a real ARM device, and run.
 
-The demo's `app/build.gradle` pulls `org.very:liveness:1.0.49` from
+The demo's `app/build.gradle` pulls `org.very:liveness:1.0.50` from
 Maven Central, so the same demo source builds against any released
 version by editing one line.
