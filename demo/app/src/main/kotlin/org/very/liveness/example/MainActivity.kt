@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.widget.SwitchCompat
 import org.very.liveness.VeryAILiveness
 import org.very.liveness.VeryLivenessConfig
 
@@ -18,6 +19,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var statusText: TextView
     private lateinit var resultLabel: TextView
     private lateinit var startButton: Button
+    private lateinit var showErrorSwitch: SwitchCompat
+    private lateinit var showSuccessSwitch: SwitchCompat
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -26,6 +29,8 @@ class MainActivity : AppCompatActivity() {
         statusText = findViewById(R.id.statusText)
         resultLabel = findViewById(R.id.resultLabel)
         startButton = findViewById(R.id.startLivenessButton)
+        showErrorSwitch = findViewById(R.id.showErrorSwitch)
+        showSuccessSwitch = findViewById(R.id.showSuccessSwitch)
 
         startButton.setOnClickListener { runLivenessCheck() }
     }
@@ -42,10 +47,10 @@ class MainActivity : AppCompatActivity() {
 
         // When true, terminal errors route to an in-SDK error page with
         // Retry / Close instead of returning straight to this callback.
-        config.showError = true
+        config.showError = showErrorSwitch.isChecked
         // When true (default), the "Thanks for verifying" success page plays
         // before returning. Set false to return the instant capture succeeds.
-        config.showSuccess = true
+        config.showSuccess = showSuccessSwitch.isChecked
         // Persist SDK logs to verysdk.log so the Appium e2e harness can adb
         // pull them on failure (file logging is gated on debugLogging).
         config.debugLogging = true
