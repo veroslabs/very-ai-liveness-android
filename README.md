@@ -15,7 +15,7 @@ app's `build.gradle`:
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.0.58'
+    implementation 'org.very:liveness:1.0.59'
 }
 ```
 
@@ -30,17 +30,17 @@ Two AARs ship at the root of every tagged release:
 
 | File | Purpose |
 |---|---|
-| `liveness-1.0.58.aar` | Main SDK — `org.very:liveness` |
-| `sdk-native-bundle-1.0.58.aar` | Optional bundled `.so` companion (see *Asset loading* below) |
+| `liveness-1.0.59.aar` | Main SDK — `org.very:liveness` |
+| `sdk-native-bundle-1.0.59.aar` | Optional bundled `.so` companion (see *Asset loading* below) |
 
 Drop them in your app's `libs/` directory and add a fileTree
 dependency:
 
 ```gradle
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['liveness-1.0.58.aar'])
+    implementation fileTree(dir: 'libs', include: ['liveness-1.0.59.aar'])
     // Optional — opt into bundled mode (see Asset loading)
-    implementation fileTree(dir: 'libs', include: ['sdk-native-bundle-1.0.58.aar'])
+    implementation fileTree(dir: 'libs', include: ['sdk-native-bundle-1.0.59.aar'])
     // VeryAILiveness depends on AndroidX + CameraX at runtime; the
     // released POM declares them, but fileTree skips POM resolution
     // so they have to be added manually:
@@ -82,6 +82,9 @@ val config = VeryLivenessConfig(
     themeMode = "dark",             // "light" or "dark"
     language = "en",                // optional — ISO 639-1, defaults to system locale
 )
+config.privacyMessage = "We use your hand motion only for anti-bot verification."
+config.learnMoreText = getString(R.string.learn_more)
+config.learnMoreUrl = "https://example.com/privacy"
 
 VeryAILiveness.check(context = this, config = config) { result ->
     runOnUiThread {
@@ -98,7 +101,10 @@ VeryAILiveness.check(context = this, config = config) { result ->
 
 `VeryLivenessConfig` is a slim subset of the full SDK's `VeryConfig` —
 no `userId` because liveness binds no user identity, but `sdkKey` is
-required to authenticate the backend session calls.
+required to authenticate the backend session calls. Optional
+`privacyMessage`, `learnMoreText`, and `learnMoreUrl` properties add
+plain-text partner copy and a host-localized disclosure link to the scan page;
+non-HTTP(S) URLs are ignored.
 
 `VeryResult.code` is one of `"success"`, `"cancelled"`, or `"error"`.
 On non-success, `result.error` carries an SDK error code and
@@ -118,8 +124,8 @@ ABI), add the companion `sdk-native-bundle` artifact alongside:
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.0.58'
-    implementation 'org.very:sdk-native-bundle:1.0.58'
+    implementation 'org.very:liveness:1.0.59'
+    implementation 'org.very:sdk-native-bundle:1.0.59'
 }
 ```
 
@@ -149,6 +155,6 @@ A runnable demo lives in `demo/` — clone this repo, open
 `demo/app/src/main/kotlin/org/very/liveness/example/MainActivity.kt`,
 plug in a real ARM device, and run.
 
-The demo's `app/build.gradle` pulls `org.very:liveness:1.0.58` from
+The demo's `app/build.gradle` pulls `org.very:liveness:1.0.59` from
 Maven Central, so the same demo source builds against any released
 version by editing one line.

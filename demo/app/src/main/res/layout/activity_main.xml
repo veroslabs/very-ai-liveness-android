@@ -31,6 +31,45 @@
         android:checked="true"
         android:layout_marginBottom="16dp" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Disclosure message (HTML allowed):"
+        android:textSize="13sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/privacyMessageInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minLines="3"
+        android:maxLines="6"
+        android:gravity="top|start"
+        android:inputType="textMultiLine|textNoSuggestions"
+        android:hint="Disclosure message (blank = none)"
+        android:textSize="13sp"
+        android:background="#F0F0F0"
+        android:padding="8dp"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/fontSizeInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="numberDecimal"
+        android:hint="Disclosure font size in sp (blank = default)"
+        android:textSize="13sp"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/scanTimeoutInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="number"
+        android:hint="Scan timeout in seconds (blank = default 10s)"
+        android:textSize="13sp"
+        android:layout_marginBottom="16dp" />
+
     <Button
         android:id="@+id/startLivenessButton"
         android:layout_width="match_parent"
