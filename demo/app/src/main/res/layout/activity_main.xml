@@ -70,6 +70,31 @@
         android:textSize="13sp"
         android:layout_marginBottom="16dp" />
 
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Custom scan strings (blank = SDK localized default):"
+        android:textSize="13sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/showYourHandInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text|textNoSuggestions"
+        android:hint="showYourHand — replaces Show your hand"
+        android:textSize="13sp"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/connectDotsInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="text|textNoSuggestions"
+        android:hint="connectDots — replaces Connect the dots"
+        android:textSize="13sp"
+        android:layout_marginBottom="16dp" />
+
     <Button
         android:id="@+id/startLivenessButton"
         android:layout_width="match_parent"

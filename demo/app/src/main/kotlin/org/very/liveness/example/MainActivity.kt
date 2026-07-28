@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import org.very.liveness.VeryAILiveness
 import org.very.liveness.VeryLivenessConfig
+import org.very.sdk.VeryCustomString
 
 /**
  * Minimal demo of the standalone `VeryAILiveness` SDK
@@ -29,6 +30,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var privacyMessageInput: EditText
     private lateinit var fontSizeInput: EditText
     private lateinit var scanTimeoutInput: EditText
+    private lateinit var showYourHandInput: EditText
+    private lateinit var connectDotsInput: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,6 +45,8 @@ class MainActivity : AppCompatActivity() {
         privacyMessageInput = findViewById(R.id.privacyMessageInput)
         fontSizeInput = findViewById(R.id.fontSizeInput)
         scanTimeoutInput = findViewById(R.id.scanTimeoutInput)
+        showYourHandInput = findViewById(R.id.showYourHandInput)
+        connectDotsInput = findViewById(R.id.connectDotsInput)
 
         // Prefill with X's disclosure copy so the field is populated on launch;
         // edit either box to try your own copy / size.
@@ -96,6 +101,16 @@ class MainActivity : AppCompatActivity() {
         // Optional scan-gesture timeout (seconds) from the input box; blank/invalid
         // → 0, which uses the SDK default (10s). Raise it for slower testing.
         config.scanTimeoutSeconds = scanTimeoutInput.text.toString().trim().toIntOrNull() ?: 0
+        // Host-supplied overrides for the scan-page status strings. Only the two
+        // keys the liveness page can render are offered — showYourFirstHand is
+        // enrollment-only, so it never surfaces here. Blank boxes are left out of
+        // the map entirely so the SDK's localized default wins.
+        config.customStrings = buildMap {
+            showYourHandInput.text.toString().trim()
+                .takeIf { it.isNotEmpty() }?.let { put(VeryCustomString.SHOW_YOUR_HAND, it) }
+            connectDotsInput.text.toString().trim()
+                .takeIf { it.isNotEmpty() }?.let { put(VeryCustomString.CONNECT_DOTS, it) }
+        }.ifEmpty { null }
 
         VeryAILiveness.check(
             context = this,

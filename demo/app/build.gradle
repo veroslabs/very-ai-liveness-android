@@ -29,6 +29,18 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+        // Debug-signed, installable APK that runs the host app through R8
+        // full mode (AGP 8 default) — the only way to exercise the SDK the
+        // way a minified partner build (e.g. Zar) does. Use to reproduce /
+        // verify the Android 13 parcelable crash: `./gradlew :app:installMinified`
+        // on an API 33 device. Kept off `debug` so normal debug + e2e/Appium
+        // builds stay unminified.
+        minified {
+            initWith debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            matchingFallbacks = ['debug']
+        }
     }
 }
 
@@ -36,7 +48,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
 
-    implementation 'org.very:liveness:1.0.62'
+    implementation 'org.very:liveness:1.0.63'
 
     // Force CameraX 1.4.1 for 16 KB aligned native libs.
     def camerax_version = "1.4.1"
