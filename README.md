@@ -19,6 +19,22 @@ dependencies {
 }
 ```
 
+This is **slim mode** — the ~18 MB-per-ABI `libPalmAPISaas.so` is not in
+the AAR and downloads from CDN on first scan. To bundle it in your APK
+instead (instant first scan, +18 MB per ABI), add the companion
+artifact:
+
+```gradle
+dependencies {
+    implementation 'org.very:liveness:1.0.63'
+    implementation 'org.very:sdk-native-bundle:1.0.63'
+}
+```
+
+> **Don't combine `sdk-native-bundle` with `org.very:sdk`** — the full
+> SDK already bundles the same .so, and adding both produces a jniLibs
+> merge conflict at AGP packaging time.
+
 Maven Central is the canonical channel. The AARs committed in this
 repo are a parallel mirror for partners who prefer pulling binaries
 out of git (vendoring, air-gapped CI, etc.) — see *Install — Manual AAR*
@@ -31,7 +47,7 @@ Two AARs ship at the root of every tagged release:
 | File | Purpose |
 |---|---|
 | `liveness-1.0.63.aar` | Main SDK — `org.very:liveness` |
-| `sdk-native-bundle-1.0.63.aar` | Optional bundled `.so` companion (see *Asset loading* below) |
+| `sdk-native-bundle-1.0.63.aar` | Optional bundled `.so` companion (see *Install — Gradle* above) |
 
 Drop them in your app's `libs/` directory and add a fileTree
 dependency:
@@ -39,7 +55,7 @@ dependency:
 ```gradle
 dependencies {
     implementation fileTree(dir: 'libs', include: ['liveness-1.0.63.aar'])
-    // Optional — opt into bundled mode (see Asset loading)
+    // Optional — opt into bundled mode
     implementation fileTree(dir: 'libs', include: ['sdk-native-bundle-1.0.63.aar'])
     // VeryAILiveness depends on AndroidX + CameraX at runtime; the
     // released POM declares them, but fileTree skips POM resolution
@@ -71,20 +87,13 @@ Liveness uses the device camera and the on-device PalmID native
 library. Both work on real ARM devices only (no emulator support for
 the .so).
 
-## Usage
+## Quickstart
 
 ```kotlin
 import org.very.liveness.VeryAILiveness
 import org.very.liveness.VeryLivenessConfig
 
-val config = VeryLivenessConfig(
-    sdkKey = "your-sdk-key",        // required — issued by Very
-    themeMode = "dark",             // "light" or "dark"
-    language = "en",                // optional — ISO 639-1, defaults to system locale
-)
-config.privacyMessage = "We use your hand motion only for anti-bot verification."
-config.learnMoreText = getString(R.string.learn_more)
-config.learnMoreUrl = "https://example.com/privacy"
+val config = VeryLivenessConfig(sdkKey = "your-sdk-key")
 
 VeryAILiveness.check(context = this, config = config) { result ->
     runOnUiThread {
@@ -99,54 +108,24 @@ VeryAILiveness.check(context = this, config = config) { result ->
 }
 ```
 
-`VeryLivenessConfig` is a slim subset of the full SDK's `VeryConfig` —
-no `userId` because liveness binds no user identity, but `sdkKey` is
-required to authenticate the backend session calls. Optional
-`privacyMessage`, `learnMoreText`, and `learnMoreUrl` properties add
-plain-text partner copy and a host-localized disclosure link to the scan page;
-non-HTTP(S) URLs are ignored.
+## Documentation
 
-`VeryResult.code` is one of `"success"`, `"cancelled"`, or `"error"`.
-On non-success, `result.error` carries an SDK error code and
-`result.errorMessage` carries a localized human-readable message.
+**https://very.org/docs/liveness-sdk/android**
 
-## Asset loading
+The full guide is the single source of truth for everything beyond the
+snippet above:
 
-The native palm-recognition library (`libPalmAPISaas.so`, ~18 MB per
-ABI) ships in **slim mode** by default — `org.very:liveness` does not
-include the .so. The SDK downloads it from CDN on first scan and
-caches it under app-private storage; subsequent launches use the
-cache. Plan for a loading state on the first scan (5–15 s on typical
-networks).
+- `VeryLivenessConfig` reference — theming, language, and the
+  success / error pages.
+- Privacy disclosure — the `privacyMessage` partner copy and its
+  inline `<a href>` link.
+- `VeryResult` codes and error handling.
+- Slim vs. bundled asset loading.
+- Network endpoints to allowlist.
 
-To bundle the .so inside your APK (instant first scan, +18 MB per
-ABI), add the companion `sdk-native-bundle` artifact alongside:
-
-```gradle
-dependencies {
-    implementation 'org.very:liveness:1.0.63'
-    implementation 'org.very:sdk-native-bundle:1.0.63'
-}
-```
-
-> **Don't combine `sdk-native-bundle` with `org.very:sdk`** — the full
-> SDK already bundles the same .so, and adding both produces a jniLibs
-> merge conflict at AGP packaging time.
-
-## Network endpoints
-
-If your network restricts egress, allowlist the following:
-
-| Purpose | URL |
-|---|---|
-| Liveness session create | `https://api.very.org/v1/sdk/liveness-sessions` |
-| Liveness result POST | `https://api.very.org/v1/sdk/liveness-sessions/{id}/result` |
-| Model download (primary) | `https://assets.very.org/sdk/v3/<abi>/libPalmAPISaas.so` |
-| Model download (backup) | `https://r2.assets.very.org/sdk/v3/<abi>/libPalmAPISaas.so` |
-
-The result POST is fire-and-forget — it doesn't block the host
-callback. The model download path is unused in bundled mode after the
-first install.
+Docs track the latest release. If you are pinned to an older tag, treat
+this README's install coordinates as authoritative and the docs as
+describing a possibly newer API.
 
 ## Demo
 
