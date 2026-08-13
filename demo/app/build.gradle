@@ -3,6 +3,16 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+// Release signing for the APK handed to testers, identical to the full SDK
+// example's — the same demo.keystore signs both, which is fine because the two
+// apps have different applicationIds and so never upgrade over each other.
+// Credentials come from the environment (see fastlane/.env.example) so no
+// keystore lands in git. When they are absent the release build falls back to
+// the debug key, which keeps a local `assembleRelease` working — such an APK is
+// for local use only, as it will not upgrade over a properly signed install.
+def demoKeystore = System.getenv("DEMO_KEYSTORE_PATH")
+def hasDemoKeystore = demoKeystore != null && file(demoKeystore).exists()
+
 android {
     namespace 'org.very.liveness.example'
     compileSdk 34
@@ -11,8 +21,10 @@ android {
         applicationId "org.very.liveness.example"
         minSdk 23
         targetSdk 34
-        versionCode 1
-        versionName "1.0.0"
+        // Overridden by the fastlane demo_release lane (-PdemoVersionCode /
+        // -PdemoVersionName) so distributed builds always move forward.
+        versionCode ((project.findProperty("demoVersionCode") ?: 1) as Integer)
+        versionName (project.findProperty("demoVersionName") ?: "1.0.0")
     }
 
     compileOptions {
@@ -24,8 +36,20 @@ android {
         jvmTarget = '11'
     }
 
+    signingConfigs {
+        demo {
+            if (hasDemoKeystore) {
+                storeFile file(demoKeystore)
+                storePassword System.getenv("DEMO_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("DEMO_KEY_ALIAS") ?: "demo"
+                keyPassword System.getenv("DEMO_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig hasDemoKeystore ? signingConfigs.demo : signingConfigs.debug
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
@@ -48,7 +72,7 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
 
-    implementation 'org.very:liveness:1.0.64'
+    implementation 'org.very:liveness:1.0.65'
 
     // Force CameraX 1.4.1 for 16 KB aligned native libs.
     def camerax_version = "1.4.1"
