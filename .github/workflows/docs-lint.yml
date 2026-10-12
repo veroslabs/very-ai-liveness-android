@@ -22,6 +22,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: DavidAnson/markdownlint-cli2-action@v20
         with:
           globs: "**/*.md"
