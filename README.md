@@ -110,7 +110,7 @@ VeryAILiveness.check(context = this, config = config) { result ->
 
 ## Documentation
 
-**https://very.org/docs/liveness-sdk/android**
+**<https://very.org/docs/liveness-sdk/android>**
 
 The full guide is the single source of truth for everything beyond the
 snippet above:
@@ -130,10 +130,21 @@ describing a possibly newer API.
 ## Demo
 
 A runnable demo lives in `demo/` — clone this repo, open
-`demo/` in Android Studio, replace the placeholder `sdkKey` in
+`demo/` in Android Studio, replace the staging `sdkKey` in
 `demo/app/src/main/kotlin/org/very/liveness/example/MainActivity.kt`,
 plug in a real ARM device, and run.
 
 The demo's `app/build.gradle` pulls `org.very:liveness:1.0.65` from
 Maven Central, so the same demo source builds against any released
 version by editing one line.
+
+Release signing for the demo (`DEMO_KEYSTORE_PATH`, `DEMO_KEYSTORE_PASSWORD`,
+`DEMO_KEY_ALIAS`, `DEMO_KEY_PASSWORD` env vars) and the fastlane
+`demo_release` lane referenced in `demo/app/build.gradle` live in
+[veroslabs/very-mobile-sdk](https://github.com/veroslabs/very-mobile-sdk),
+not here. Without them, `assembleRelease` falls back to the debug key, so that
+APK is for local use only.
+
+The demo also has a `minified` build type (R8 full mode, debug-signed) for
+reproducing minified-partner issues: `./gradlew :app:installMinified` from
+`demo/`.
