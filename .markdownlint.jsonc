@@ -1,0 +1,10 @@
+// Permissive markdownlint config: catches broken structure, ignores style nits.
+{
+  "default": true,
+  "MD013": false,
+  "MD033": false,
+  "MD041": false,
+  "MD024": { "siblings_only": true },
+  "MD036": false,
+  "MD060": false
+}
