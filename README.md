@@ -145,6 +145,12 @@ Release signing for the demo (`DEMO_KEYSTORE_PATH`, `DEMO_KEYSTORE_PASSWORD`,
 not here. Without them, `assembleRelease` falls back to the debug key, so that
 APK is for local use only.
 
-The demo also has a `minified` build type (R8 full mode, debug-signed) for
-reproducing minified-partner issues: `./gradlew :app:installMinified` from
-`demo/`.
+The demo also has a `minified` build type for reproducing issues seen in
+minified partner builds: `./gradlew :app:installMinified` from `demo/`. It is
+`initWith debug` (so it stays debuggable and debug-signed) with
+`minifyEnabled true` and `proguard-android-optimize.txt` plus
+`proguard-rules.pro`, so R8 does shrink and obfuscate the app. R8 runs in full
+mode, the AGP 8 default, because `gradle.properties` does not set
+`android.enableR8.fullMode`. `shrinkResources` is not enabled. Because the
+build is debuggable, it is not identical to a partner's minified release
+build.
