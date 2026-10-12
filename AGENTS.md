@@ -11,7 +11,7 @@ AARs in git are a mirror. SDK source: `veroslabs/very-mobile-sdk`.
 
 ## Demo (`demo/`)
 
-- Gradle project, app module `:app`, namespace `org.very.liveness.example`; compileSdk/targetSdk 34, minSdk 23, Java/Kotlin 11.
+- Gradle project, app module `:app`, namespace `org.very.liveness.example`; compileSdk/targetSdk 34, minSdk 23, Java source/bytecode target 11, Kotlin JVM target 11; JDK 17 required to run Gradle (AGP 8).
 - Build types in `demo/app/build.gradle`: `debug`, `release` (demo keystore via `DEMO_*` env vars, else debug key), `minified` (R8, debug-signed; `./gradlew :app:installMinified`).
 - `versionCode`/`versionName` can be overridden with `-PdemoVersionCode` / `-PdemoVersionName` (used by the fastlane `demo_release` lane, which lives in `very-mobile-sdk`).
 - Run on a real ARM device; the emulator is unsupported for the native library.
