@@ -1,22 +1,30 @@
 # AGENTS.md — very-ai-liveness-android
 
-Prebuilt AAR distribution of the VeryAILiveness Android SDK (v1.0.65). Maven
-Central (`org.very:liveness`, `org.very:sdk-native-bundle`) is canonical; the
-AARs in git are a mirror. SDK source: `veroslabs/very-mobile-sdk`.
+Prebuilt AAR distribution of the VeryAILiveness Android SDK (v1.1.0).
+Maven Central (`org.very:liveness`) is canonical; the AAR in git is a
+mirror. Every release regenerates this repository except `.github/` and
+`.markdownlint.jsonc`, so an edit here does not survive the next release.
 
 ## Release invariants
 
-- Keep `1.0.65` in sync: AAR filenames, README (Gradle, manual AAR, demo sections), `demo/app/build.gradle`.
-- Do not combine `org.very:sdk-native-bundle` with `org.very:sdk` (jniLibs merge conflict).
+- Each release is one commit on `main` plus the tag `1.1.0`; tags never move.
+- `1.1.0` appears in the AAR filename, `README.md`, this file and
+  `demo/app/build.gradle`; a release updates all of them together.
+- `org.very:sdk-native-bundle` is no longer published or needed.
 
 ## Demo (`demo/`)
 
-- Gradle project, app module `:app`, namespace `org.very.liveness.example`; compileSdk/targetSdk 34, minSdk 23, Java source/bytecode target 11, Kotlin JVM target 11; JDK 17 required to run Gradle (AGP 8).
-- Build types in `demo/app/build.gradle`: `debug`, `release` (demo keystore via `DEMO_*` env vars, else debug key), `minified` (`initWith debug`: a debuggable, debug-signed build; minification is effectively off; `./gradlew :app:installMinified`).
-- `versionCode`/`versionName` can be overridden with `-PdemoVersionCode` / `-PdemoVersionName` (used by the fastlane `demo_release` lane, which lives in `very-mobile-sdk`).
-- Run on a real ARM device; the emulator is unsupported for the native library.
+- Gradle project, app module `:app`, namespace `org.very.liveness.example`;
+  compileSdk/targetSdk 34, minSdk 23, Java and Kotlin JVM target 11; JDK 17
+  runs Gradle (AGP 8.5.2).
+- Depends on `org.very:liveness:1.1.0` from Maven Central.
+- Build types in `demo/app/build.gradle`: `debug`, `release` (signed with
+  the `DEMO_*` environment keystore, else the debug key) and `minified`
+  (debug-signed, R8 full mode; `./gradlew :app:installMinified`).
+- `-PdemoVersionCode` / `-PdemoVersionName` override the version.
+- The check needs a camera: run the demo on a device.
 
 ## Testing and CI
 
 - No automated tests. CI only lints Markdown: `npx markdownlint-cli2 "**/*.md"`.
-- Don't commit keystores, signing passwords, or new SDK keys.
+- Don't commit keystores, signing passwords or SDK keys.

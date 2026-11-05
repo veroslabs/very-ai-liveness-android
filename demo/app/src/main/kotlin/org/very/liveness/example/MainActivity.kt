@@ -6,13 +6,16 @@ import android.graphics.Rect
 import android.os.Bundle
 import android.view.MotionEvent
 import android.view.inputmethod.InputMethodManager
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.SwitchCompat
 import org.very.liveness.VeryAILiveness
 import org.very.liveness.VeryLivenessConfig
+import org.very.liveness.VeryLivenessSessionProvider
 import org.very.sdk.VeryCustomString
 
 /**
@@ -29,9 +32,12 @@ class MainActivity : AppCompatActivity() {
     private lateinit var showSuccessSwitch: SwitchCompat
     private lateinit var privacyMessageInput: EditText
     private lateinit var fontSizeInput: EditText
-    private lateinit var scanTimeoutInput: EditText
     private lateinit var showYourHandInput: EditText
     private lateinit var connectDotsInput: EditText
+    private lateinit var brokerUrlInput: EditText
+    private lateinit var themeSpinner: Spinner
+
+    private val themeOptions = arrayOf("dark", "light")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,9 +50,14 @@ class MainActivity : AppCompatActivity() {
         showSuccessSwitch = findViewById(R.id.showSuccessSwitch)
         privacyMessageInput = findViewById(R.id.privacyMessageInput)
         fontSizeInput = findViewById(R.id.fontSizeInput)
-        scanTimeoutInput = findViewById(R.id.scanTimeoutInput)
         showYourHandInput = findViewById(R.id.showYourHandInput)
         connectDotsInput = findViewById(R.id.connectDotsInput)
+        brokerUrlInput = findViewById(R.id.brokerUrlInput)
+        brokerUrlInput.hint = DEFAULT_BROKER_URL
+        brokerUrlInput.setText(getPreferences(MODE_PRIVATE).getString(BROKER_URL_KEY, ""))
+        themeSpinner = findViewById(R.id.themeSpinner)
+        themeSpinner.adapter =
+            ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, themeOptions)
 
         // Prefill with X's disclosure copy so the field is populated on launch;
         // edit either box to try your own copy / size.
@@ -74,43 +85,76 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun runLivenessCheck() {
+        // Liveness is decided by Very's server only (as in the web SDK), so a
+        // check cannot start without the broker that issues its session.
+        // An empty field uses the hosted demo broker.
+        val typedUrl = brokerUrlInput.text.toString().trim()
+        val brokerUrl = typedUrl.ifEmpty { DEFAULT_BROKER_URL }
+        val brokerUri = android.net.Uri.parse(brokerUrl)
+        if (brokerUri.scheme !in setOf("http", "https") || brokerUri.host.isNullOrEmpty()) {
+            statusText.text = "Invalid session broker URL (leave it empty for the default)"
+            statusText.setTextColor(Color.parseColor("#C62828"))
+            return
+        }
+        // Only a typed URL is remembered; clearing the field goes back to the default.
+        getPreferences(MODE_PRIVATE).edit().apply {
+            if (typedUrl.isEmpty()) remove(BROKER_URL_KEY) else putString(BROKER_URL_KEY, typedUrl)
+        }.apply()
         startButton.isEnabled = false
         statusText.text = "Starting liveness check..."
 
         val config = VeryLivenessConfig(
-            sdkKey = "veryai_sdk_EvY1fzQDal-3XLkhyegxUg6Vr03wVzmmmHLCGkp5EnM",  // staging SDK key — replace with yours
-            themeMode = "light",
+            sdkKey = "veryai_sdk_EvY1fzQDal-3XLkhyegxUg6Vr03wVzmmmHLCGkp5EnM",  // production SDK key — replace with yours
+            themeMode = themeOptions[themeSpinner.selectedItemPosition],
             language = "en",
         )
 
-        // When true, terminal errors route to an in-SDK error page with
-        // Retry / Close instead of returning straight to this callback.
+        // When true, terminal errors park on an in-SDK Retry / Close sheet
+        // over the camera instead of returning straight to this callback.
         config.showError = showErrorSwitch.isChecked
-        // When true (default), the "Thanks for verifying" success page plays
-        // before returning. Set false to return the instant capture succeeds.
+        // When true (default), the "Thanks for confirming" sheet shows and waits
+        // for Close before returning. Set false to return the instant capture succeeds.
         config.showSuccess = showSuccessSwitch.isChecked
-        // Persist SDK logs to verysdk.log so the Appium e2e harness can adb
-        // pull them on failure (file logging is gated on debugLogging).
+        // Persist SDK logs to verysdk.log so a failed run can be inspected with
+        // adb pull (file logging is gated on debugLogging).
         config.debugLogging = true
-        // Host-supplied disclosure copy from the input box. Basic HTML is
-        // honoured: an <a href> renders as an inline link the SDK opens on tap.
-        config.privacyMessage = privacyMessageInput.text.toString().ifBlank { null }
+        // The privacy notice and scan instruction are the app's saved text: they
+        // ride on the session (see withSavedText below), the way a backend sends
+        // the Developer Portal's text. config.privacyMessage and
+        // customStrings.showYourHand would only stand in for a session without it.
+        val savedNotice = privacyMessageInput.text.toString().trim()
+        val savedInstruction = showYourHandInput.text.toString().trim()
         // Optional disclosure font size (sp) from the input box; blank/invalid
-        // → 0, which uses the SDK default (12sp).
+        // → 0, which uses the SDK default (12sp). It styles whichever notice shows.
         config.privacyMessageFontSize = fontSizeInput.text.toString().trim().toFloatOrNull() ?: 0f
-        // Optional scan-gesture timeout (seconds) from the input box; blank/invalid
-        // → 0, which uses the SDK default (10s). Raise it for slower testing.
-        config.scanTimeoutSeconds = scanTimeoutInput.text.toString().trim().toIntOrNull() ?: 0
-        // Host-supplied overrides for the scan-page status strings. Only the two
-        // keys the liveness page can render are offered — showYourFirstHand is
-        // enrollment-only, so it never surfaces here. Blank boxes are left out of
-        // the map entirely so the SDK's localized default wins.
-        config.customStrings = buildMap {
-            showYourHandInput.text.toString().trim()
-                .takeIf { it.isNotEmpty() }?.let { put(VeryCustomString.SHOW_YOUR_HAND, it) }
-            connectDotsInput.text.toString().trim()
-                .takeIf { it.isNotEmpty() }?.let { put(VeryCustomString.CONNECT_DOTS, it) }
-        }.ifEmpty { null }
+        // Host-supplied override for the Touch prompt. Blank leaves it out of the
+        // map entirely so the SDK's localized default wins.
+        config.customStrings = connectDotsInput.text.toString().trim()
+            .takeIf { it.isNotEmpty() }?.let { mapOf(VeryCustomString.CONNECT_DOTS to it) }
+        // The SDK asks this app for an evidence session, which the broker
+        // (the stand-in for this app's backend)
+        // creates on Very production. The SDK then talks to production for the
+        // check itself, so any API override is cleared.
+        System.clearProperty("org.very.sdk.apiBase")
+        config.multiPointTouch = true
+        config.sessionProvider = VeryLivenessSessionProvider { request, callback ->
+            Thread {
+                try {
+                    val conn = (java.net.URL(brokerUrl).openConnection() as java.net.HttpURLConnection).apply {
+                        requestMethod = "POST"
+                        doOutput = true
+                        setRequestProperty("Content-Type", "application/json")
+                        outputStream.use { it.write(request.toJson().toByteArray()) }
+                    }
+                    val ok = conn.responseCode in 200..299
+                    val body = (if (ok) conn.inputStream else conn.errorStream)?.bufferedReader()?.use { it.readText() } ?: ""
+                    if (ok) callback.onSession(withSavedText(body, savedInstruction, savedNotice))
+                    else callback.onError(IllegalStateException("broker HTTP ${conn.responseCode}: $body"))
+                } catch (t: Throwable) {
+                    callback.onError(t)
+                }
+            }.start()
+        }
 
         VeryAILiveness.check(
             context = this,
@@ -124,11 +168,16 @@ class MainActivity : AppCompatActivity() {
                     appendLine("error: ${result.error ?: "(null)"}")
                     appendLine("errorMessage: ${result.errorMessage ?: "(null)"}")
                     appendLine("isSuccess: ${result.isSuccess}")
+                    result.signedToken?.let { appendLine("signedToken: ${it.take(48)}…") }
                 }
                 when {
                     result.isSuccess -> {
                         statusText.text = "Liveness check passed!"
                         statusText.setTextColor(Color.parseColor("#2E7D32"))
+                    }
+                    result.code == "rejected" -> {
+                        statusText.text = "Liveness check rejected by Very (signed)"
+                        statusText.setTextColor(Color.parseColor("#C62828"))
                     }
                     result.code == "cancelled" -> {
                         statusText.text = "Liveness check cancelled by user"
@@ -144,7 +193,32 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * The demo plays the Developer Portal: non-blank text typed in the boxes
+     * rides on the session as `appearance`, the way an app's saved instruction
+     * and privacy notice arrive from a real backend. Blank boxes leave the
+     * backend's own text alone. The session's other bytes stay exactly as
+     * issued: the merged `appearance` is appended as the last member, which the
+     * SDK reads over an earlier one.
+     */
+    private fun withSavedText(session: String, instruction: String, notice: String): String {
+        if (instruction.isEmpty() && notice.isEmpty()) return session
+        val trimmed = session.trimEnd()
+        if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return session
+        val appearance = runCatching { org.json.JSONObject(trimmed).optJSONObject("appearance") }.getOrNull()
+            ?: org.json.JSONObject()
+        if (instruction.isNotEmpty()) appearance.put("instruction", instruction)
+        if (notice.isNotEmpty()) appearance.put("privacyMessage", notice)
+        return trimmed.dropLast(1) + ",\"appearance\":" + appearance + "}"
+    }
+
     private companion object {
+        /** The last broker URL typed, so a phone pass needs it typed only once. */
+        const val BROKER_URL_KEY = "brokerUrl"
+        /** Used while the field is empty: the hosted broker on the stable demo domain (Very production sessions).
+         *  The local one is `http://127.0.0.1:8799/sessions` through `adb reverse tcp:8799 tcp:8799`. */
+        const val DEFAULT_BROKER_URL = "https://very-liveness-web.vercel.app/native-api/sessions"
+
         // Demonstrates the supported inline HTML: <b> for bold, <font color> for
         // colour, and <a href> for a tappable link.
         const val DEFAULT_PRIVACY_MESSAGE =
@@ -153,6 +227,6 @@ class MainActivity : AppCompatActivity() {
             "<font color=\"#68C906\">never recorded as a video</font> and " +
             "it never leaves your device. It is not used for any other purpose other than " +
             "anti-bot verification and will not be sold, leased, or traded. " +
-            "<a href=\"https://help.x.com/en/rules-and-policies/real-person\">Learn more</a>"
+            "<a href=\"https://very.org/legal/privacy\">Learn more</a>"
     }
 }

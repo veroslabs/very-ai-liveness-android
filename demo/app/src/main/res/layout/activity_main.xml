@@ -1,7 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Scrolls so the start button stays reachable on short screens. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true">
+
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:orientation="vertical"
     android:padding="16dp">
 
@@ -14,6 +20,48 @@
         android:padding="8dp"
         android:background="#E0E0E0"
         android:layout_marginBottom="16dp" />
+
+    <!-- Liveness is decided by Very's server only, as in the web SDK: the SDK
+         asks this app for an evidence session, which the broker
+         (the stand-in for this app's backend)
+         creates. There is no on-device result. -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Session broker URL (empty uses the hosted demo broker):"
+        android:textSize="13sp"
+        android:layout_marginBottom="4dp" />
+
+    <EditText
+        android:id="@+id/brokerUrlInput"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:inputType="textUri|textNoSuggestions"
+        android:textSize="13sp"
+        android:layout_marginBottom="16dp" />
+
+    <!-- Theme selector — mirrors the auth example so the liveness page can be
+         checked in both themes. -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="8dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Theme:"
+            android:textSize="14sp"
+            android:layout_marginEnd="8dp" />
+
+        <Spinner
+            android:id="@+id/themeSpinner"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1" />
+    </LinearLayout>
 
     <androidx.appcompat.widget.SwitchCompat
         android:id="@+id/showErrorSwitch"
@@ -34,7 +82,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Disclosure message (HTML allowed):"
+        android:text="Saved privacy notice, sent on the session as the Developer Portal would (HTML allowed; one line, &lt;br&gt; for breaks):"
         android:textSize="13sp"
         android:layout_marginBottom="4dp" />
 
@@ -46,7 +94,7 @@
         android:maxLines="6"
         android:gravity="top|start"
         android:inputType="textMultiLine|textNoSuggestions"
-        android:hint="Disclosure message (blank = none)"
+        android:hint="Privacy notice (blank = the session's own, else none)"
         android:textSize="13sp"
         android:background="#F0F0F0"
         android:padding="8dp"
@@ -58,15 +106,6 @@
         android:layout_height="wrap_content"
         android:inputType="numberDecimal"
         android:hint="Disclosure font size in sp (blank = default)"
-        android:textSize="13sp"
-        android:layout_marginBottom="8dp" />
-
-    <EditText
-        android:id="@+id/scanTimeoutInput"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:inputType="number"
-        android:hint="Scan timeout in seconds (blank = default 10s)"
         android:textSize="13sp"
         android:layout_marginBottom="16dp" />
 
@@ -82,7 +121,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:inputType="text|textNoSuggestions"
-        android:hint="showYourHand — replaces Show your hand"
+        android:hint="Saved instruction, sent on the session — replaces Show your palm"
         android:textSize="13sp"
         android:layout_marginBottom="8dp" />
 
@@ -105,8 +144,7 @@
     <TextView
         android:id="@+id/resultLabel"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:minHeight="100dp"
         android:padding="12dp"
         android:background="#F5F5F5"
@@ -115,3 +153,5 @@
         android:gravity="top" />
 
 </LinearLayout>
+
+</ScrollView>

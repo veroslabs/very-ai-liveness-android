@@ -2,3 +2,6 @@ Copyright (c) 2026 Veros Inc. All rights reserved.
 
 This software is proprietary and confidential. Unauthorized copying,
 distribution, or use of this software, via any medium, is strictly prohibited.
+
+Third-party components are listed in THIRD_PARTY_NOTICES.md and remain under
+their own licenses (licenses/).

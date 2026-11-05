@@ -1,78 +1,34 @@
 # VeryAILiveness — Android distribution
 
 Prebuilt AAR distribution of the VeryAILiveness palm-liveness SDK for Android.
-Source code lives in [veroslabs/very-mobile-sdk](https://github.com/veroslabs/very-mobile-sdk).
 
-A liveness check opens a single-shot palm scan that confirms a live human
-palm. The flow makes two backend calls (issue session on entry, record
-outcome on exit) and produces a pass/fail `VeryResult` — no enrollment,
-no verification, no signed token.
+A check opens a palm scan, collects evidence on the device and submits it to
+Very, which decides. Your backend creates each liveness session — the server
+secret never ships in the app — and the SDK returns a `VeryLivenessResult` carrying
+Very's signed decision.
 
 ## Install — Gradle (recommended)
 
-`org.very:liveness` is published to Maven Central. Add the dep in your
-app's `build.gradle`:
+`org.very:liveness` is on Maven Central:
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.0.65'
+    implementation 'org.very:liveness:1.1.0'
 }
 ```
 
-This is **slim mode** — the ~18 MB-per-ABI `libPalmAPISaas.so` is not in
-the AAR and downloads from CDN on first scan. To bundle it in your APK
-instead (instant first scan, +18 MB per ABI), add the companion
-artifact:
+The models (about 9 MB) are not in the AAR: the SDK downloads them on first
+use, checks each file against a pinned SHA-256 and caches it on the device.
+Call `VeryAILiveness.prefetch(context)` early (for example when the screen
+that offers the check opens) to move the download off the scan page.
+`org.very:sdk-native-bundle` is no longer needed — remove it.
 
-```gradle
-dependencies {
-    implementation 'org.very:liveness:1.0.65'
-    implementation 'org.very:sdk-native-bundle:1.0.65'
-}
-```
+## Install — manual AAR
 
-> **Don't combine `sdk-native-bundle` with `org.very:sdk`** — the full
-> SDK already bundles the same .so, and adding both produces a jniLibs
-> merge conflict at AGP packaging time.
-
-Maven Central is the canonical channel. The AARs committed in this
-repo are a parallel mirror for partners who prefer pulling binaries
-out of git (vendoring, air-gapped CI, etc.) — see *Install — Manual AAR*
-below.
-
-## Install — Manual AAR
-
-Two AARs ship at the root of every tagged release:
-
-| File | Purpose |
-|---|---|
-| `liveness-1.0.65.aar` | Main SDK — `org.very:liveness` |
-| `sdk-native-bundle-1.0.65.aar` | Optional bundled `.so` companion (see *Install — Gradle* above) |
-
-Drop them in your app's `libs/` directory and add a fileTree
-dependency:
-
-```gradle
-dependencies {
-    implementation fileTree(dir: 'libs', include: ['liveness-1.0.65.aar'])
-    // Optional — opt into bundled mode
-    implementation fileTree(dir: 'libs', include: ['sdk-native-bundle-1.0.65.aar'])
-    // VeryAILiveness depends on AndroidX + CameraX at runtime; the
-    // released POM declares them, but fileTree skips POM resolution
-    // so they have to be added manually:
-    implementation 'androidx.appcompat:appcompat:1.6.1'
-    implementation 'com.google.android.material:material:1.11.0'
-    def camerax_version = "1.4.1"
-    implementation "androidx.camera:camera-core:${camerax_version}"
-    implementation "androidx.camera:camera-camera2:${camerax_version}"
-    implementation "androidx.camera:camera-lifecycle:${camerax_version}"
-    implementation "androidx.camera:camera-view:${camerax_version}"
-}
-```
-
-Prefer the Maven Central path unless you have a specific reason —
-fileTree skips POM resolution so transitive deps have to be added by
-hand and won't auto-bump between releases.
+`liveness-1.1.0.aar` is at the root of this tag. Prefer Maven Central:
+a file dependency skips the POM, so add its runtime dependencies yourself
+(listed in the POM on Maven Central: AndroidX, CameraX, LiteRT, Kotlin
+coroutines, Guava, Bouncy Castle, AndroidSVG, Play Integrity).
 
 ## Project requirements
 
@@ -83,68 +39,46 @@ hand and won't auto-bump between releases.
 | Java / Kotlin target | 11 |
 | Manifest permissions | `android.permission.CAMERA`, `android.permission.INTERNET` |
 
-Liveness uses the device camera and the on-device PalmID native
-library. Both work on real ARM devices only (no emulator support for
-the .so).
-
 ## Quickstart
 
 ```kotlin
 import org.very.liveness.VeryAILiveness
 import org.very.liveness.VeryLivenessConfig
+import org.very.liveness.VeryLivenessSessionProvider
 
 val config = VeryLivenessConfig(sdkKey = "your-sdk-key")
+config.sessionProvider = VeryLivenessSessionProvider { request, callback ->
+    // Your backend creates the session with Very (server secret) and returns
+    // the response body unchanged: callback.onSession(json) or callback.onError(e).
+}
 
 VeryAILiveness.check(context = this, config = config) { result ->
-    runOnUiThread {
-        when {
-            result.isSuccess           -> { /* liveness passed */ }
-            result.code == "cancelled" -> { /* user dismissed the page */ }
-            else                       -> {
-                // result.error / result.errorMessage carry the failure detail
-            }
-        }
-    }
+    // result.isSuccess only when Very's signed decision passed;
+    // result.signedToken is the receipt for your backend.
 }
 ```
 
+## Upgrading from 1.0.x
+
+1.1.0 evaluates the check on Very's servers: your backend must create each
+session (`sessionProvider` is required, or every check fails with 5002) and
+verify `result.signedToken`. `scanTimeoutSeconds` is gone and
+`touchPolicyVersion` became `multiPointTouch`.
+`VeryResult` became `VeryLivenessResult` (`errorType` is a
+`VeryLivenessErrorType`). Remove `org.very:sdk-native-bundle`.
+Details: `CHANGELOG.md`.
+
 ## Documentation
 
-**<https://very.org/docs/liveness-sdk/android>**
-
-The full guide is the single source of truth for everything beyond the
-snippet above:
-
-- `VeryLivenessConfig` reference — theming, language, and the
-  success / error pages.
-- Privacy disclosure — the `privacyMessage` partner copy and its
-  inline `<a href>` link.
-- `VeryResult` codes and error handling.
-- Slim vs. bundled asset loading.
-- Network endpoints to allowlist.
-
-Docs track the latest release. If you are pinned to an older tag, treat
-this README's install coordinates as authoritative and the docs as
-describing a possibly newer API.
+**https://very.org/docs/liveness-sdk/android**
 
 ## Demo
 
-A runnable demo lives in `demo/` — clone this repo, open
-`demo/` in Android Studio, replace the staging `sdkKey` in
-`demo/app/src/main/kotlin/org/very/liveness/example/MainActivity.kt`,
-plug in a real ARM device, and run.
+`demo/` is a standalone Android Studio project that pulls
+`org.very:liveness:1.1.0` from Maven Central. It asks for the URL of a
+session broker — your backend's session endpoint.
 
-The demo's `app/build.gradle` pulls `org.very:liveness:1.0.65` from
-Maven Central, so the same demo source builds against any released
-version by editing one line.
+## Licenses
 
-Release signing for the demo (`DEMO_KEYSTORE_PATH`, `DEMO_KEYSTORE_PASSWORD`,
-`DEMO_KEY_ALIAS`, `DEMO_KEY_PASSWORD` env vars) and the fastlane
-`demo_release` lane referenced in `demo/app/build.gradle` live in
-[veroslabs/very-mobile-sdk](https://github.com/veroslabs/very-mobile-sdk),
-not here. Without them, `assembleRelease` falls back to the debug key, so that
-APK is for local use only.
-
-The demo also has a `minified` build type: `./gradlew :app:installMinified`
-from `demo/`. It is `initWith debug`, so it is a debuggable, debug-signed
-build, and minification is effectively off for it.
+Proprietary — see `LICENSE`. Third-party components: `THIRD_PARTY_NOTICES.md`.
+Changes by version: `CHANGELOG.md`.
