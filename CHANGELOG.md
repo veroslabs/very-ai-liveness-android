@@ -4,6 +4,22 @@ Partner-facing changes to the VeryAILiveness SDK (`VeryAILiveness` on
 CocoaPods / Swift Package Manager, `org.very:liveness` on Maven Central).
 Releases before 1.1.0 were published from `very-mobile-sdk`.
 
+## 1.1.1
+
+A drop-in update to 1.1.0: no API, backend or integration changes. The scan
+screen follows the latest design review on iOS and Android.
+
+### Changed
+
+- The scan page asks the user to "Show your hand" (it said palm), in every
+  supported language. A session's own instruction text still replaces it.
+- The hand outline shows on its own while the page waits for a hand; the guide
+  box appears once a hand is detected and stays up while the hand is outside it.
+- The scan frame sits a little lower, the hand outline is a little smaller, and
+  the frame and its notice line up with the controls at the top.
+- While the scan page loads, it shows only a spinner, without the
+  "loading..." text. Screen readers still announce that it is loading.
+
 ## 1.1.0
 
 Very evaluates the check on its servers from evidence the device collects.
