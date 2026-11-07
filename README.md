@@ -13,7 +13,7 @@ Very's signed decision.
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.1.1'
+    implementation 'org.very:liveness:1.1.2'
 }
 ```
 
@@ -25,7 +25,7 @@ that offers the check opens) to move the download off the scan page.
 
 ## Install — manual AAR
 
-`liveness-1.1.1.aar` is at the root of this tag. Prefer Maven Central:
+`liveness-1.1.2.aar` is at the root of this tag. Prefer Maven Central:
 a file dependency skips the POM, so add its runtime dependencies yourself
 (listed in the POM on Maven Central: AndroidX, CameraX, LiteRT, Kotlin
 coroutines, Guava, Bouncy Castle, AndroidSVG, Play Integrity).
@@ -75,7 +75,7 @@ Details: `CHANGELOG.md`.
 ## Demo
 
 `demo/` is a standalone Android Studio project that pulls
-`org.very:liveness:1.1.1` from Maven Central. It asks for the URL of a
+`org.very:liveness:1.1.2` from Maven Central. It asks for the URL of a
 session broker — your backend's session endpoint.
 
 ## Licenses

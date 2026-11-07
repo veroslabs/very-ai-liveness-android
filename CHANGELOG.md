@@ -4,6 +4,30 @@ Partner-facing changes to the VeryAILiveness SDK (`VeryAILiveness` on
 CocoaPods / Swift Package Manager, `org.very:liveness` on Maven Central).
 Releases before 1.1.0 were published from `very-mobile-sdk`.
 
+## 1.1.2
+
+A drop-in update to 1.1.1: no API, backend or behaviour change on devices.
+Android is unchanged.
+
+### Changed
+
+- **CocoaPods: add a `:source` to the pod line.** CocoaPods trunk accepts no
+  new versions from 2026-12-02, so Very publishes the pod to its own spec
+  repository, which carries every version (1.1.0 is only there):
+  `pod 'VeryAILiveness', '~> 1.1', :source => 'https://github.com/veroslabs/very-cocoapods-specs.git'`.
+  The `:source` applies to this pod only. Without it CocoaPods resolves no
+  version newer than 1.1.1, and never 1.1.0. Swift Package Manager is unchanged.
+- **iOS: the simulator slice is back to arm64 and x86_64.** 1.1.0 and 1.1.1
+  shipped an arm64-only simulator slice, so a Swift Package Manager app built
+  for every simulator architecture (a generic simulator destination, a Release
+  simulator build, an Intel Mac or Rosetta) failed with "unsupported Swift
+  architecture", and the pod set `EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64`
+  on your app target. Neither is needed now: remove that setting if you added
+  it for this SDK. As before, the simulator never runs a check:
+  `isSupported()` returns `false` and `check` returns error 6102.
+- iOS: `prefetch()` does nothing on the simulator, where it used to download
+  the models (about 9.5 MB) that no check there could use.
+
 ## 1.1.1
 
 A drop-in update to 1.1.0: no API, backend or integration changes. The scan
