@@ -23,8 +23,8 @@ and `licenses/` under `META-INF/very-liveness/`.
   (MIT-style). Android only, resolved from Maven for Ed25519 verification; it is
   not inside the AAR.
 
-The Android POM also declares AndroidX, CameraX, Kotlin coroutines, Guava,
-AndroidSVG and Play Integrity; each is resolved from Maven under its own license.
+The Android POM also declares AndroidX, CameraX, Kotlin coroutines and
+AndroidSVG; each is resolved from Maven under its own license.
 
 The `RecoveredModels` coefficients (downloaded on first use, like the hand
 models) and Very's UI artwork, strings and screens are

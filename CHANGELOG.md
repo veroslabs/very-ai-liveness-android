@@ -4,6 +4,140 @@ Partner-facing changes to the VeryAILiveness SDK (`VeryAILiveness` on
 CocoaPods / Swift Package Manager, `org.very:liveness` on Maven Central).
 Releases before 1.1.0 were published from `very-mobile-sdk`.
 
+## 1.3.7
+
+Adds errors 6110 and 5013 and makes a timeout return Very's signed rejection.
+Android drops three unused dependencies from the POM. The version jumps from
+1.1.2 to 1.3.7 to match web SDK 1.3.7, whose fixes this release carries; there
+is no native 1.2.x or 1.3.0–1.3.6. The two SDKs still differ where their notes
+say so, for example in when the hand outline and the Touch dots show.
+
+Swift Package Manager `from:` a 1.x version (such as `from: "1.1.2"`) and
+CocoaPods `~> 1.1` resolve to 1.3.7. A lockfile keeps the version you have: run
+`pod update VeryAILiveness`, or update the package in Xcode (File → Packages →
+Update to Latest Package Versions). CocoaPods also needs the pod's `:source`
+from 1.1.2 (Very's spec repository): trunk stops at 1.1.1.
+A three-part CocoaPods pin such as `~> 1.1.2` (the form the 1.1.x install notes
+gave) means below 1.2 and stays on 1.1.x: change it to `~> 1.3`.
+
+### Added
+
+- **Error 6110, camera unavailable** (`VeryLivenessErrorType.cameraUnavailable`
+  / `CAMERA_UNAVAILABLE`), the web SDK's `camera_unavailable`. Camera access is
+  granted, but the camera reports a fault (another app holds it, a call
+  interrupts it on iOS, a device policy disables it on Android, or a device
+  error) and then delivers no frame for 5 seconds. The check used to keep
+  asking for a hand until the budget ran out and return 6107. A timeout while
+  the camera is down also returns 6110. Once the scan has started the attempt
+  is still submitted, so 6110 can arrive with `code:"rejected"` and the receipt.
+  If your code switches over every `VeryLivenessErrorType`, add the new value.
+- **Error 5013, too many requests** (`VeryLivenessErrorType.rateLimited` /
+  `RATE_LIMITED`). Very answered a request with HTTP 429; try again later. This
+  used to return 5002, invalid session. Add it to an exhaustive switch too.
+
+### Changed
+
+- **`VeryLivenessConfig.privacyMessage` keeps only the session notice's markup**
+  (`<a href>` to an http(s) URL, `<b>`, `<strong>`, `<br>`, `<font color="#rgb">`);
+  other markup is shown as text, as in a notice saved in the Developer Portal.
+  On iOS the HTML importer no longer loads anything the host's notice refers to.
+- **Android: three unused dependencies are gone from the POM**: Play Integrity
+  (`com.google.android.play:integrity`), Guava (`com.google.guava:guava`) and
+  `kotlinx-coroutines-guava`. The SDK never called them. If your app uses any of
+  them without declaring it, declare it now.
+
+### Fixed
+
+- **A timed-out check returns Very's signed rejection.** The frame that arrived
+  just after the capture budget ran out was recorded, so the evidence reported a
+  capture longer than the session allowed. Very refused the body as invalid and
+  the result was `code:"error"` 6107 with no receipt. A timeout now returns
+  `code:"rejected"` with the receipt and error 6107, as the web SDK does.
+- **A completed capture that Very passes is a success.** When the capture
+  budget ran out (or the camera stopped) while the final checks of a completed
+  capture were still running, Very could pass the attempt and the result was
+  still `code:"error"` 6107 without the receipt. Very's signed pass now
+  decides: the result is `code:"success"` with the receipt.
+- **A setup timeout that waited on the network returns 6002.** When the session
+  or Very's key has not arrived within the 30-second setup budget, the check
+  returns 6002 (`timeout`, the network timeout) instead of 6107. A setup
+  timeout with nothing in flight (for example the camera permission prompt
+  left open) is still 6107.
+- **The SDK shows the user's language by default.** With no
+  `VeryLivenessConfig.language`, Android always showed English, whatever the
+  system language, and kept a language set for an earlier check. Both platforms
+  now try the user's languages in order (the system list, or the app's own
+  language setting) and show the first one the SDK supports, as the web SDK
+  does with the browser's; iOS used to follow the app's own localizations
+  instead. A code is read as the web SDK reads it: an unlisted region keeps its
+  language (`zh-CN`, `de-AT`, `es_MX`), Chinese script beats region
+  (`zh-Hans-HK` is Simplified, `zh-Hant` Traditional), and `tl` is Filipino.
+- **Back or a swipe on the success sheet delivers the success.** Very had
+  passed the check, but closing its "Thanks for confirming" sheet with Android's
+  back key or an iOS swipe-down returned `cancelled` (6104) without the receipt.
+  It now returns `code:"success"` with the receipt, as Close and `cancel()` do.
+- **A failed submission reports what failed.** When the evidence could not reach
+  Very (network, server error, expired session), a check that had also failed
+  locally returned its local code (6102, 6107, 6110). It now returns the
+  request's own code: 6004, 6006 or 5002.
+- **A device-side failure is an error, not a rejection.** When the final local
+  model checks did not run, the attempt was still sent and came back as
+  `rejected` with a receipt. Like the web SDK, the SDK now ends it as
+  `code:"error"` (6102) without sending it.
+- **The scan never outlives the session.** The capture deadline is now capped at
+  the session's expiry, as on the web: an attempt on an expired session ends at
+  once with 5002 instead of after the gesture.
+- **The camera prompt no longer eats the time budgets.** iOS started the capture
+  budget while the system camera prompt was still up; the capture now starts once
+  access is granted. Android restarts the 30-second setup budget at the grant, so
+  a slow answer to the prompt is no longer reported as a network timeout (6002).
+- **Android: `cancel()` right after `check()` is no longer lost.** A cancel that
+  arrived before the page opened, or while Retry opened a new page, was dropped;
+  the page now takes it as soon as it opens.
+- **Android: privacy-notice colours and links.** `<font color="#rgb">` showed the
+  wrong colour (`#fff` as dark blue); links the browser accepts (a space in the
+  path, `_` or non-ASCII host names) were shown as raw markup.
+- **Android: the session provider is released after each check.** The SDK kept
+  every `sessionProvider` (and whatever it held) for the life of the process.
+- **A capture completed in time is not a timeout.** When the person finished
+  just before the budget ran out and Very then rejected the attempt, the result
+  carried 6107 because the budget ended while the final local checks ran. As on
+  the web, the budget stops at completion and the final checks get up to 15
+  seconds of their own, so the rejection is 6102.
+- **A slow network can no longer hold the check for minutes.** A request to Very
+  was only bounded per wait for data, so a trickle of bytes kept "Checking" on
+  screen well past a minute. Each request now gets at most 15 seconds in all
+  (telemetry 5), as in the web SDK.
+- **iOS: a swipe-down the user lets go of no longer freezes the scan.** With
+  `presentationStyle = .modal`, starting to drag the sheet down and letting it
+  settle back stopped the frame loop for good: the camera kept running but
+  nothing was checked, the host's `sessionProvider` was asked for a second
+  session, and the check ended with 6107. The scan now stops only when the sheet
+  actually closes, and a session already received is never requested again.
+- **iOS: privacy-notice links read the same on every iOS version.** iOS 16 and
+  earlier refused a link with a space or a non-ASCII character that iOS 17,
+  Android and the web accept; such a notice showed raw markup.
+- **Telemetry follows the server's switch.** A device that had cached the
+  switch as off kept its outcome reports to itself for up to 7 days after the
+  switch was turned back on. Reports on a session now go out and the server
+  applies its switch, as for the web SDK. Their fields are counted as the web
+  SDK counts them (a hand lost during the action, hints, failed holds, time
+  from the capture start), and a network failure keeps the blocker the frames
+  showed.
+- **The hand outline and the Touch dots follow the hand on screen.** A detected
+  hand still outside the scan box showed both the outline and the box; the
+  outline now shows only while no hand is detected. The Touch dots needed both
+  fingertips inside the box, so a still hand with the thumb just outside kept
+  no dots and a "keep your hand inside the frame" hint. They now need the
+  fingertips only where the dots are drawn, between the dimmed edges. The palm
+  must still be in the box before the check starts.
+- **Faster setup on slow networks.** The SDK no longer waits for its feature
+  flags before asking your `sessionProvider` for a session (a first check on the
+  device used to), and fetches Very's receipt key while your server creates the
+  session instead of after. On a network where Very is slow to reach, setup now
+  pays one connection timeout instead of up to three in a row. Android also
+  starts downloading the liveness models when `check()` is called, as iOS does.
+
 ## 1.1.2
 
 A drop-in update to 1.1.1: no API, backend or behaviour change on devices.

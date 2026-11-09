@@ -13,7 +13,7 @@ Very's signed decision.
 
 ```gradle
 dependencies {
-    implementation 'org.very:liveness:1.1.2'
+    implementation 'org.very:liveness:1.3.7'
 }
 ```
 
@@ -25,10 +25,10 @@ that offers the check opens) to move the download off the scan page.
 
 ## Install — manual AAR
 
-`liveness-1.1.2.aar` is at the root of this tag. Prefer Maven Central:
+`liveness-1.3.7.aar` is at the root of this tag. Prefer Maven Central:
 a file dependency skips the POM, so add its runtime dependencies yourself
 (listed in the POM on Maven Central: AndroidX, CameraX, LiteRT, Kotlin
-coroutines, Guava, Bouncy Castle, AndroidSVG, Play Integrity).
+coroutines, Bouncy Castle and AndroidSVG).
 
 ## Project requirements
 
@@ -38,6 +38,22 @@ coroutines, Guava, Bouncy Castle, AndroidSVG, Play Integrity).
 | `compileSdk` | 34+ |
 | Java / Kotlin target | 11 |
 | Manifest permissions | `android.permission.CAMERA`, `android.permission.INTERNET` |
+
+The SDK runs its models on LiteRT 1.0.1
+(`com.google.ai.edge.litert:litert:1.0.1`), which keeps the
+`org.tensorflow.lite` package. An app that also pulls in TensorFlow Lite
+artifacts (`org.tensorflow:tensorflow-lite`, `tensorflow-lite-api`, or a library
+that depends on them, such as `tensorflow-lite-support`) gets duplicate-class
+build errors. Find them with `./gradlew :app:dependencies`, then move to the
+LiteRT 1.0.1 artifacts: `litert` and `litert-api` for `tensorflow-lite`
+and `tensorflow-lite-api`, `litert-support` and `litert-support-api` for
+`tensorflow-lite-support`. In 1.x these keep the `org.tensorflow.lite` and
+`org.tensorflow.lite.support` packages, so your imports do not change. Or exclude
+the TensorFlow Lite ones where the API matches.
+
+LiteRT Support 2.x is not a drop-in replacement: it moves the support classes to
+`com.google.ai.edge.litert.support` (those imports change), requires minSdk 24,
+and raises LiteRT itself to 2.x for the whole app, the SDK included.
 
 ## Quickstart
 
@@ -75,7 +91,7 @@ Details: `CHANGELOG.md`.
 ## Demo
 
 `demo/` is a standalone Android Studio project that pulls
-`org.very:liveness:1.1.2` from Maven Central. It asks for the URL of a
+`org.very:liveness:1.3.7` from Maven Central. It asks for the URL of a
 session broker — your backend's session endpoint.
 
 ## Licenses
